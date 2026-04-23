@@ -22,7 +22,7 @@ Jika Anda ingin menjalankan atau membagikan (sharing) *project* ini ke laptop/ko
 ### Langkah-langkah Menjalankan:
 
 **1. Salin atau Ekstrak Folder**
-Pindahkan folder aplikasi ini (`inventory-lab-revisi-2`) ke komputer tujuan (ideal-nya di `C:\laragon\www\` atau `C:\xampp\htdocs\`).
+Pindahkan folder aplikasi ini (`inventory-lab-revisi-4`) ke komputer tujuan (ideal-nya di `C:\laragon\www\` atau `C:\xampp\htdocs\`).
 
 **2. Buka Terminal / CMD**
 Buka terminal dan arahkan ke dalam folder direktori project ini.
