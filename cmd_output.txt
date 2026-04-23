@@ -1,0 +1,37 @@
+
+  Dropping all tables  1s DONE
+
+   INFO  Preparing database.  
+
+  Creating migration table  87.31ms DONE
+
+   INFO  Running migrations.  
+
+  0001_01_01_000000_create_users_table  159.46ms DONE
+  0001_01_01_000001_create_cache_table  44.14ms DONE
+  0001_01_01_000002_create_jobs_table  89.07ms DONE
+  2026_04_01_090531_create_categories_table  7.68ms DONE
+  2026_04_01_090531_create_units_table  7.82ms DONE
+  2026_04_01_090532_create_item_request_details_table  529.71ms FAIL
+
+   Illuminate\Database\QueryException 
+
+  SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'item_requests' (Connection: mysql, Host: 127.0.0.1, Port: 3306, Database: db_inventory, SQL: alter table `item_request_details` add constraint `item_request_details_item_request_id_foreign` foreign key (`item_request_id`) references `item_requests` (`id`) on delete cascade)
+
+  at vendor\laravel\framework\src\Illuminate\Database\Connection.php:841
+    837▕             $exceptionType = ($isUniqueConstraintError = $this->isUniqueConstraintError($e))
+    838▕                 ? UniqueConstraintViolationException::class
+    839▕                 : QueryException::class;
+    840▕ 
+  ➜ 841▕             $exception = new $exceptionType(
+    842▕                 $this->getNameWithReadWriteType(),
+    843▕                 $query,
+    844▕                 $this->prepareBindings($bindings),
+    845▕                 $e,
+
+  1   vendor\laravel\framework\src\Illuminate\Database\Connection.php:587
+      PDOException::("SQLSTATE[HY000]: General error: 1824 Failed to open the referenced table 'item_requests'")
+
+  2   vendor\laravel\framework\src\Illuminate\Database\Connection.php:587
+      PDOStatement::execute()
+

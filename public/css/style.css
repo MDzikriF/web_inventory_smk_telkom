@@ -1,0 +1,83 @@
+/* public/css/style.css */
+:root {
+  --primary: #c91a25;
+  --primary-hover: #a1141d;
+  --bg-color: #f4f7f6;
+  --sidebar-bg: #ffffff;
+  --text-dark: #333333;
+  --text-muted: #6c757d;
+  --border-color: #e2e8f0;
+  --font-family: 'Inter', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-family); background-color: var(--bg-color); color: var(--text-dark); overflow-x: hidden; }
+
+a { text-decoration: none; color: inherit; }
+button { cursor: pointer; border: none; outline: none; }
+
+/* Buttons */
+.btn {
+  padding: 10px 20px; border-radius: 8px; font-weight: 600;
+  transition: all 0.3s ease; text-align: center; display: inline-block; font-size: 0.95rem;
+}
+.btn-primary { background: var(--primary); color: white; }
+.btn-primary:hover { background: var(--primary-hover); transform: translateY(-1px); box-shadow: 0 4px 12px rgba(201, 26, 37, 0.2); }
+.btn-block { width: 100%; display: block; }
+
+/* Forms */
+.form-group { margin-bottom: 20px; }
+.form-label { display: block; margin-bottom: 8px; font-weight: 500; font-size: 0.9rem; }
+.form-control {
+  width: 100%; padding: 12px 15px; border: 1px solid var(--border-color);
+  border-radius: 8px; font-size: 1rem; transition: border-color 0.3s ease;
+}
+.form-control:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(201, 26, 37, 0.1); }
+
+/* Unified Login Layout */
+.auth-wrapper {
+  display: flex; min-height: 100vh; align-items: center; justify-content: center;
+  background: var(--bg-color); padding: 20px;
+}
+.auth-card {
+  background: white; border-radius: 16px; overflow: hidden;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.05); display: flex;
+  max-width: 900px; width: 100%;
+}
+.auth-image { flex: 1; background: url('https://via.placeholder.com/600x800.png?text=Laboratory+Image') center/cover; display: none; }
+@media (min-width: 768px) { .auth-image { display: block; } }
+.auth-form-container { flex: 1; padding: 40px; }
+.auth-logo { color: var(--primary); font-size: 1.5rem; font-weight: 700; margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+.auth-title { font-size: 1.8rem; margin-bottom: 10px; font-weight: 700; }
+.auth-subtitle { color: var(--text-muted); margin-bottom: 30px; }
+
+/* Dashboard Layout */
+.dashboard-wrapper { display: flex; min-height: 100vh; }
+.sidebar {
+  width: 260px; background: var(--sidebar-bg); border-right: 1px solid var(--border-color);
+  display: flex; flex-direction: column; transition: transform 0.3s ease;
+}
+.sidebar-header { padding: 24px 20px; border-bottom: 1px solid var(--border-color); font-weight: 800; font-size: 1.25rem; color: var(--primary); display: flex; align-items: center; justify-content: space-between; }
+.sidebar-menu { padding: 20px 0; flex: 1; overflow-y: auto; }
+.menu-item { display: flex; align-items: center; padding: 14px 20px; color: var(--text-dark); transition: all 0.2s ease; margin: 4px 10px; border-radius: 8px; font-weight: 500;}
+.menu-item:hover, .menu-item.active { background: var(--primary); color: #ffffff; }
+.menu-icon { margin-right: 15px; width: 20px; text-align: center; font-size: 1.2rem;}
+.menu-badge { margin-left: auto; padding: 2px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; color: white; display: flex; align-items: center; justify-content: center; min-width: 20px;}
+
+.main-content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.topbar {
+  height: 70px; background: #e9ecef; border-bottom: 1px solid var(--border-color);
+  display: flex; align-items: center; justify-content: space-between; padding: 0 30px;
+}
+.page-trigger { display: none; background: transparent; font-size: 1.5rem; color: var(--text-dark); cursor:pointer;}
+.content-area { padding: 30px; overflow-y: auto; flex: 1; }
+
+.page-title { font-size: 1.5rem; font-weight: 700; margin-bottom: 25px; }
+.card { background: white; border-radius: 12px; border: 1px solid var(--border-color); box-shadow: 0 4px 15px rgba(0,0,0,0.02); padding: 25px; margin-bottom: 20px; transition: transform 0.3s; }
+.card:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0,0,0,0.05); }
+
+@media (max-width: 768px) {
+  .sidebar { position: fixed; left: -260px; height: 100vh; z-index: 1000; box-shadow: 5px 0 15px rgba(0,0,0,0.05); }
+  .sidebar.show { transform: translateX(260px); }
+  .page-trigger { display: block; }
+}
