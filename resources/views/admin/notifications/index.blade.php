@@ -34,6 +34,15 @@
     .btn-mark-read { background: rgba(220, 53, 69, 0.1); color: #dc3545; border: none; padding: 6px 14px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; cursor: pointer; transition: 0.2s; white-space:nowrap; }
     .btn-mark-read:hover { background: #dc3545; color: white; }
     .unread { border-left: 4px solid #dc3545; background-color: #fff9fa; }
+    
+    /* Pagination Fix */
+    .custom-pagination { display: flex; justify-content: center; margin-top: 20px; }
+    .custom-pagination nav { display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 0.9rem; flex-wrap: wrap; gap: 15px; }
+    .custom-pagination ul.pagination { display: flex; padding-left: 0; list-style: none; gap: 5px; margin: 0; }
+    .custom-pagination .page-link { position: relative; display: block; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 6px; color: var(--text-dark); text-decoration: none; background: white; transition: 0.2s; font-weight: 500; }
+    .custom-pagination .page-link:hover { background: #f8f9fa; border-color: #ccc; }
+    .custom-pagination .page-item.active .page-link { z-index: 3; color: #fff; background-color: var(--primary); border-color: var(--primary); }
+    .custom-pagination .page-item.disabled .page-link { color: var(--text-muted); pointer-events: none; background-color: #f8f9fa; border-color: var(--border-color); opacity: 0.6; }
 </style>
 
 <div class="nf-tabs">
@@ -67,8 +76,8 @@
                         </div>
                     @endforeach
                 </div>
-                <div class="mt-4">
-                    {{ $notifications->links() }}
+                <div class="mt-4 custom-pagination">
+                    {{ $notifications->links('pagination::bootstrap-4') }}
                 </div>
             @else
                 <div class="text-center py-5">

@@ -56,7 +56,8 @@
         $pendingDamages = auth()->check() ? \App\Models\DamageReport::where('status', 'pending')->count() : 0;
         $pendingValidationCount = $pendingRequests + $pendingDamages;
         $pendingUserCount = auth()->check() ? \App\Models\User::where('is_active', false)->count() : 0;
-        $unreadChatCount = auth()->check() ? \App\Models\Message::where('receiver_id', auth()->user()->nip)->where('is_read', false)->count() : 0;
+        $adminNips = auth()->check() ? \App\Models\User::where('role', 'admin')->pluck('nip')->toArray() : [];
+        $unreadChatCount = auth()->check() ? \App\Models\Message::whereIn('receiver_id', $adminNips)->where('is_read', false)->count() : 0;
     @endphp
     <div class="dashboard-wrapper">
         <!-- Sidebar -->
@@ -174,7 +175,7 @@
     </script>
 
 <!-- Footer -->
-<footer style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; text-align: center; padding: 20px; margin-top: auto; border-top: 3px solid var(--primary);">
+<footer style="background: var(--primary-hover); color: white; text-align: center; padding: 20px; margin-top: auto; border-top: 3px solid rgba(0,0,0,0.1);">
     <div style="max-width: 1200px; margin: 0 auto;">
         <p style="margin: 0; font-size: 0.9rem; font-weight: 500;">
             Mahasiswa Teknik Informatika 2023

@@ -131,7 +131,7 @@
     </script>
 
 <!-- Footer -->
-<footer style="background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%); color: white; text-align: center; padding: 20px; margin-top: auto; border-top: 3px solid var(--primary);">
+<footer style="background: var(--primary-hover); color: white; text-align: center; padding: 20px; margin-top: auto; border-top: 3px solid rgba(0,0,0,0.1);">
     <div style="max-width: 1200px; margin: 0 auto;">
         <p style="margin: 0; font-size: 0.9rem; font-weight: 500;">
             Mahasiswa Teknik Informatika 2023
