@@ -32,4 +32,15 @@ class Item extends Model
     {
         return $this->hasMany(Transaction::class);
     }
+
+    public function getPhotoUrlAttribute()
+    {
+        if (!$this->photo) {
+            return 'https://via.placeholder.com/50x50.png?text=Item';
+        }
+        if (\Illuminate\Support\Str::startsWith($this->photo, ['http://', 'https://'])) {
+            return $this->photo;
+        }
+        return asset($this->photo);
+    }
 }

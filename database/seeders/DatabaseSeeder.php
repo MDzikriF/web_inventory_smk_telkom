@@ -23,6 +23,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'Admin Inventaris',
                 'password' => bcrypt('admin123'),
                 'role' => 'admin',
+                'is_active' => true,
             ]
         );
 
@@ -32,6 +33,7 @@ class DatabaseSeeder extends Seeder
                 'name' => 'User Mahasiswa',
                 'password' => bcrypt('user123'),
                 'role' => 'user',
+                'is_active' => true,
             ]
         );
 

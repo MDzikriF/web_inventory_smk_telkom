@@ -21,6 +21,7 @@
                 <thead>
                     <tr>
                         <th>Tgl Pengajuan</th>
+                        <th>Tgl Update</th>
                         <th>Barang dipinjam</th>
                         <th style="text-align:center;">Qty</th>
                         <th>Status</th>
@@ -34,6 +35,7 @@
                         @endphp
                         <tr style="{{ (!$isBahan && in_array($req->status, ['pending', 'approved', 'return-requested'])) ? 'background-color: rgba(52, 152, 219, 0.03);' : '' }}">
                             <td style="color:var(--text-muted);">{{ \Carbon\Carbon::parse($req->created_at)->format('d M Y') }}</td>
+                            <td style="color:var(--text-muted);">{{ \Carbon\Carbon::parse($req->updated_at)->format('d M Y, H:i') }}</td>
                             <td>
                                 <strong>{{ $detail->item->name ?? 'Aset Dihapus' }}</strong><br>
                                 <span style="font-size:0.8rem; color:var(--text-muted);">Req ID: #{{ str_pad($req->id, 4, '0', STR_PAD_LEFT) }}</span>
@@ -69,6 +71,9 @@
                     @endforeach
                 </tbody>
             </table>
+        </div>
+        <div class="mt-4 custom-pagination">
+            {{ $histories->links('pagination::bootstrap-4') }}
         </div>
     @endif
 </div>

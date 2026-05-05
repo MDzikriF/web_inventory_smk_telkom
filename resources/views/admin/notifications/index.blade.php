@@ -64,7 +64,7 @@
                             <div class="nf-body">
                                 <h4 class="nf-title">{{ $notification->title }}</h4>
                                 <p class="nf-desc">{{ $notification->message }}</p>
-                                <div class="nf-time">{{ $notification->created_at->diffForHumans() }}</div>
+                                <div class="nf-time">{{ $notification->created_at->format('d M Y, H:i') }} &bull; {{ $notification->created_at->diffForHumans() }}</div>
                             </div>
                             @if(!$notification->is_read)
                                 <div style="display:flex; align-items:center;">
@@ -77,7 +77,7 @@
                     @endforeach
                 </div>
                 <div class="mt-4 custom-pagination">
-                    {{ $notifications->links('pagination::bootstrap-4') }}
+                    {{ $notifications->appends(request()->except('notif_page'))->links('pagination::bootstrap-4') }}
                 </div>
             @else
                 <div class="text-center py-5">
@@ -102,11 +102,9 @@
             <p style="color: var(--text-muted); font-size: 0.9rem;">Daftar aktivitas peminjaman, keluar/masuk barang, dan perbaikan aset.</p>
         </div>
 
-        <div class="nf-subtabs">
             <button class="nf-subtab-btn active" onclick="switchSubTab('peminjaman', this)">Peminjaman Aset</button>
             <button class="nf-subtab-btn" onclick="switchSubTab('keluarmasuk', this)">Keluar Masuk Stok</button>
             <button class="nf-subtab-btn" onclick="switchSubTab('perbaikan', this)">Laporan Perbaikan</button>
-            <button class="nf-subtab-btn" onclick="switchSubTab('cetak', this)" style="background-color: #f8f9fa; border-color: #ddd; color: #333;">Cetak Laporan</button>
         </div>
 
         <!-- SUBTAB: PEMINJAMAN -->
@@ -189,6 +187,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div class="mt-4 custom-pagination">
+                    {{ $histories->appends(request()->except('hist_page'))->links('pagination::bootstrap-4') }}
+                </div>
             </div>
             </div>
         @endif
@@ -231,6 +232,9 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div class="mt-4 custom-pagination">
+                    {{ $transactions->appends(request()->except('trans_page'))->links('pagination::bootstrap-4') }}
+                </div>
             </div>
             @endif
         </div>
@@ -275,62 +279,15 @@
                         @endforeach
                     </tbody>
                 </table>
+                <div class="mt-4 custom-pagination">
+                    {{ $damageReports->appends(request()->except('dmg_page'))->links('pagination::bootstrap-4') }}
+                </div>
             </div>
             @endif
         </div>
 
-        <!-- SUBTAB: CETAK LAPORAN -->
-        <div id="subtab-cetak" class="nf-subtab-content">
-            <div style="background: #fdfdfd; border: 1px solid #eee; border-radius: 12px; padding: 25px;">
-                <h4 style="margin-top: 0; font-weight: 700; color: #333; margin-bottom: 15px;">Ekspor Laporan Bulanan</h4>
-                <p style="color: var(--text-muted); font-size: 0.9rem; margin-bottom: 20px;">
-                    Pilih bulan dan tahun untuk menghasilkan laporan Keluar/Masuk Stok dan Kerusakan Barang. Anda dapat mencetaknya langsung ke PDF atau mengunduh dalam format Excel (CSV).
-                </p>
-                
-                <form id="formCetakLaporan" method="GET" action="{{ route('admin.history.report.pdf') }}" target="_blank" style="display: flex; gap: 15px; flex-wrap: wrap; align-items: flex-end;">
-                    
-                    <div style="flex: 1; min-width: 150px;">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #555; margin-bottom: 5px;">Bulan</label>
-                        <select name="bulan" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-family: inherit;">
-                            @php
-                                $bulanSekarang = date('n');
-                                $bulanList = [
-                                    1 => 'Januari', 2 => 'Februari', 3 => 'Maret', 4 => 'April',
-                                    5 => 'Mei', 6 => 'Juni', 7 => 'Juli', 8 => 'Agustus',
-                                    9 => 'September', 10 => 'Oktober', 11 => 'November', 12 => 'Desember'
-                                ];
-                            @endphp
-                            @foreach($bulanList as $num => $name)
-                                <option value="{{ str_pad($num, 2, '0', STR_PAD_LEFT) }}" {{ $bulanSekarang == $num ? 'selected' : '' }}>
-                                    {{ $name }}
-                                </option>
-                            @endforeach
-                        </select>
-                    </div>
-
-                    <div style="flex: 1; min-width: 150px;">
-                        <label style="display: block; font-size: 0.85rem; font-weight: 600; color: #555; margin-bottom: 5px;">Tahun</label>
-                        <select name="tahun" required style="width: 100%; padding: 10px; border: 1px solid #ddd; border-radius: 8px; outline: none; font-family: inherit;">
-                            @php
-                                $tahunSekarang = date('Y');
-                            @endphp
-                            @for($i = $tahunSekarang; $i >= $tahunSekarang - 5; $i--)
-                                <option value="{{ $i }}">{{ $i }}</option>
-                            @endfor
-                        </select>
-                    </div>
-
-                    <div style="display: flex; gap: 10px; padding-top: 5px;">
-                        <button type="submit" onclick="document.getElementById('formCetakLaporan').action='{{ route('admin.history.report.pdf') }}'; document.getElementById('formCetakLaporan').target='_blank';" style="background: #dc3545; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                            Cetak PDF
-                        </button>
-                        <button type="submit" onclick="document.getElementById('formCetakLaporan').action='{{ route('admin.history.report.excel') }}'; document.getElementById('formCetakLaporan').target='';" style="background: #27ae60; color: white; border: none; padding: 10px 20px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 5px;">
-                            Export Excel
-                        </button>
-                    </div>
-                </form>
-            </div>
         </div>
+
     </div>
 </div>
 
@@ -352,6 +309,14 @@
     }
 
     document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('hist_page') || urlParams.has('trans_page') || urlParams.has('dmg_page')) { 
+            document.querySelector('.nf-tab-btn[onclick*="history"]').click();
+            if (urlParams.has('hist_page')) document.querySelector('.nf-subtab-btn[onclick*="peminjaman"]').click();
+            if (urlParams.has('trans_page')) document.querySelector('.nf-subtab-btn[onclick*="keluarmasuk"]').click();
+            if (urlParams.has('dmg_page')) document.querySelector('.nf-subtab-btn[onclick*="perbaikan"]').click();
+        }
+
         document.querySelectorAll('.mark-read').forEach(function(button) {
             button.addEventListener('click', function() {
                 var id = this.getAttribute('data-id');

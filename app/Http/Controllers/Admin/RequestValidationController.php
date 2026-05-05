@@ -93,18 +93,35 @@ class RequestValidationController extends Controller
         return redirect()->back()->with('success', 'Permintaan telah ditolak.');
     }
 
-    public function reviewDamage($id)
+    public function unrepairableDamage($id)
     {
         $report = DamageReport::findOrFail($id);
-        $report->update(['status' => 'reviewed']);
+        
+        DB::transaction(function() use ($report) {
+            $report->update(['status' => 'unrepairable']);
 
-        \App\Models\Notification::create([
-            'user_id' => $report->user_id,
-            'title' => 'Laporan Kerusakan Sedang Ditinjau 🔎',
-            'message' => 'Laporan kerusakan untuk aset "'.$report->item->name.'" sedang ditinjau oleh tim admin.',
-        ]);
+            // Kurangi stok barang jika masih ada (karena rusak permanen)
+            if ($report->item && $report->item->stock > 0) {
+                $report->item->decrement('stock', 1);
 
-        return redirect()->back()->with('success', 'Laporan kerusakan ditandai sedang ditinjau.');
+                // Catat transaksi barang rusak
+                \App\Models\Transaction::create([
+                    'item_id' => $report->item_id,
+                    'type' => 'out',
+                    'quantity' => 1,
+                    'date' => now()->toDateString(),
+                    'notes' => 'Penyesuaian stok: Barang rusak permanen (Laporan #' . str_pad($report->id, 4, '0', STR_PAD_LEFT) . ')',
+                ]);
+            }
+
+            \App\Models\Notification::create([
+                'user_id' => $report->user_id,
+                'title' => 'Laporan Kerusakan - Barang Rusak ⚠️',
+                'message' => 'Mohon maaf, barang "'.$report->item->name.'" yang Anda laporkan mengalami kerusakan dan tidak bisa diperbaiki.',
+            ]);
+        });
+
+        return redirect()->back()->with('success', 'Barang ditandai rusak permanen dan stok telah dikurangi.');
     }
 
     public function resolveDamage($id)
@@ -114,10 +131,10 @@ class RequestValidationController extends Controller
 
         \App\Models\Notification::create([
             'user_id' => $report->user_id,
-            'title' => 'Laporan Kerusakan Selesai ✅',
-            'message' => 'Laporan kerusakan untuk aset "'.$report->item->name.'" telah diselesaikan oleh tim admin.',
+            'title' => 'Laporan Kerusakan - Selesai Diperbaiki ✅',
+            'message' => 'Barang "'.$report->item->name.'" yang Anda laporkan telah selesai diperbaiki dan bisa digunakan kembali.',
         ]);
 
-        return redirect()->back()->with('success', 'Laporan kerusakan ditandai selesai.');
+        return redirect()->back()->with('success', 'Barang ditandai telah selesai diperbaiki.');
     }
 }

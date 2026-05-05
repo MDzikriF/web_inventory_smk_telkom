@@ -12,15 +12,18 @@ class NotificationController extends Controller
     {
         $notifications = Notification::where('user_id', auth()->id())
             ->orderBy('created_at', 'desc')
-            ->paginate(20);
+            ->paginate(10, ['*'], 'notif_page');
 
         $histories = \App\Models\ItemRequest::with(['user', 'details.item'])
             ->whereIn('status', ['approved', 'return_requested', 'returned', 'rejected'])
             ->orderBy('updated_at', 'desc')
-            ->get();
+            ->paginate(10, ['*'], 'hist_page');
 
-        $transactions = \App\Models\Transaction::with('item')->orderBy('created_at', 'desc')->get();
-        $damageReports = \App\Models\DamageReport::with(['item', 'user'])->orderBy('created_at', 'desc')->get();
+        $transactions = \App\Models\Transaction::with('item')->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'trans_page');
+            
+        $damageReports = \App\Models\DamageReport::with(['item', 'user'])->orderBy('created_at', 'desc')
+            ->paginate(10, ['*'], 'dmg_page');
 
         return view('admin.notifications.index', compact('notifications', 'histories', 'transactions', 'damageReports'));
     }

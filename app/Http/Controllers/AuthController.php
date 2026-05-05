@@ -51,16 +51,6 @@ class AuthController extends Controller
 
     public function logout(Request $request)
     {
-        if (Auth::check() && Auth::user()->role === 'admin') {
-            $request->validate([
-                'password' => 'required',
-            ]);
-
-            if (!\Illuminate\Support\Facades\Hash::check($request->password, Auth::user()->password)) {
-                return back()->with('error', 'Kata sandi salah! Gagal keluar dari sistem.');
-            }
-        }
-
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();

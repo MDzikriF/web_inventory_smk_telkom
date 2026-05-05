@@ -68,7 +68,7 @@
             </div>
             
             <div class="sidebar-menu">
-                <a href="{{ route('admin.users.index') }}" class="menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
+                <a href="#" onclick="openPasswordConfirm('{{ route('admin.users.index') }}')" class="menu-item {{ request()->is('admin/users*') ? 'active' : '' }}">
                     <span class="menu-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg></span> Data Pengguna
                     @if($pendingUserCount > 0)
                         <span class="menu-badge" style="background:#f39c12;">{{ $pendingUserCount }}</span>
@@ -99,6 +99,9 @@
                         <span id="adminNotificationBadge" class="menu-badge">{{ $adminUnreadCount }}</span>
                     @endif
                 </a>
+                <a href="{{ route('admin.history.laporan') }}" class="menu-item {{ request()->is('admin/laporan-cetak*') ? 'active' : '' }}">
+                    <span class="menu-icon"><svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg></span> Laporan
+                </a>
 
             </div>
         </aside>
@@ -113,7 +116,10 @@
                 </div>
                 
                 <div class="logout-section">
-                    <button class="btn" style="background:transparent; color: var(--primary);" onclick="openModal('logoutConfirmModal')">Logout</button>
+                    <form action="{{ route('logout') }}" method="POST">
+                        @csrf
+                        <button type="submit" class="btn" style="background:transparent; color: var(--primary);">Logout</button>
+                    </form>
                 </div>
             </header>
 
@@ -136,22 +142,23 @@
 
     @stack('modals')
 
-    <!-- Logout Confirm Modal -->
-    <div class="modal-overlay" id="logoutConfirmModal">
+    <!-- Password Confirmation Modal for User Data -->
+    <div class="modal-overlay" id="passwordConfirmModal">
         <div class="modal" style="max-width: 400px; text-align: center;">
             <div class="modal-header" style="justify-content: center; border-bottom: none; padding-bottom: 0;">
-                <h3 style="font-weight: 700; color: #e52e2e; margin: 0;">Konfirmasi Keluar</h3>
-                <button class="close-modal" onclick="closeModal('logoutConfirmModal')" style="position: absolute; right: 25px; top: 25px;">&times;</button>
+                <h3 style="font-weight: 700; color: var(--primary); margin: 0;">Konfirmasi Password</h3>
+                <button class="close-modal" onclick="closeModal('passwordConfirmModal')" style="position: absolute; right: 25px; top: 25px;">&times;</button>
             </div>
-            <form action="{{ route('logout') }}" method="POST" style="margin-top: 20px;">
+            <form id="passwordConfirmForm" method="POST" style="margin-top: 20px;">
                 @csrf
-                <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.95rem;">Silakan masukkan kata sandi Anda untuk memverifikasi dan keluar dari panel admin.</p>
+                <p style="margin-bottom: 20px; color: var(--text-muted); font-size: 0.95rem;">Silakan masukkan kata sandi Anda untuk mengakses data pengguna.</p>
                 <div style="text-align: left; margin-bottom: 20px;">
-                    <input type="password" name="password" required placeholder="Masukkan kata sandi..." style="width: 100%; border: 1px solid #c4bfb7; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 1rem;">
+                    <input type="password" name="password" id="confirmPassword" required placeholder="Masukkan kata sandi..." style="width: 100%; border: 1px solid #c4bfb7; border-radius: 8px; padding: 12px; font-family: inherit; font-size: 1rem;">
+                    <p id="passwordError" style="color: #e52e2e; font-size: 0.85rem; margin-top: 5px; display: none;">Password salah!</p>
                 </div>
                 <div style="display: flex; gap: 10px;">
-                    <button type="button" onclick="closeModal('logoutConfirmModal')" style="flex: 1; padding: 14px; background: #f1f2f6; color: var(--text-dark); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: background 0.2s;">Batal</button>
-                    <button type="submit" style="flex: 1; padding: 14px; background: #e52e2e; color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: background 0.2s;">Keluar Sistem</button>
+                    <button type="button" onclick="closeModal('passwordConfirmModal')" style="flex: 1; padding: 14px; background: #f1f2f6; color: var(--text-dark); border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: background 0.2s;">Batal</button>
+                    <button type="submit" style="flex: 1; padding: 14px; background: var(--primary); color: white; border: none; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: background 0.2s;">Konfirmasi</button>
                 </div>
             </form>
         </div>
@@ -172,6 +179,42 @@
         function closeModal(id) {
             document.getElementById(id).style.display = 'none';
         }
+
+        let targetUrl = '';
+        function openPasswordConfirm(url) {
+            targetUrl = url;
+            document.getElementById('confirmPassword').value = '';
+            document.getElementById('passwordError').style.display = 'none';
+            openModal('passwordConfirmModal');
+        }
+
+        document.getElementById('passwordConfirmForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const password = document.getElementById('confirmPassword').value;
+            const csrfToken = document.querySelector('input[name="_token"]').value;
+
+            fetch('/admin/verify-password', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken
+                },
+                body: JSON.stringify({ password: password })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    closeModal('passwordConfirmModal');
+                    window.location.href = targetUrl;
+                } else {
+                    document.getElementById('passwordError').style.display = 'block';
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                document.getElementById('passwordError').style.display = 'block';
+            });
+        });
     </script>
 
 <!-- Footer -->

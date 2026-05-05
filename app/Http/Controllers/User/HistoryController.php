@@ -22,24 +22,33 @@ class HistoryController extends Controller
             $reqA = $a->itemRequest;
             $reqB = $b->itemRequest;
             
-            // Prioritas Utama: ALAT yang BELUM selesai/dikembalikan (berstatus pending, approved, dll) ditaruh di paling ATAS
-            // Bahan (yang tidak perlu dikembalikan) dan Alat (yang sudah dikembalikan) ditaruh di BAWAH.
             $isActiveA = (!$isBahanA && in_array($reqA->status, ['pending', 'approved', 'return-requested'])) ? 1 : 0;
             $isActiveB = (!$isBahanB && in_array($reqB->status, ['pending', 'approved', 'return-requested'])) ? 1 : 0;
 
             if ($isActiveA !== $isActiveB) {
-                return $isActiveB - $isActiveA; // 1 before 0
+                return $isActiveB - $isActiveA;
             }
             
-            // Prioritas Kedua: Urutan waktu (Terbaru ke Terlama)
             $timeA = $reqA->created_at ? $reqA->created_at->timestamp : 0;
             $timeB = $reqB->created_at ? $reqB->created_at->timestamp : 0;
             
             return $timeB - $timeA;
         });
 
+        // Paginate collection
+        $page = \Illuminate\Pagination\Paginator::resolveCurrentPage() ?: 1;
+        $perPage = 10;
+        
+        $paginatedDetails = new \Illuminate\Pagination\LengthAwarePaginator(
+            $sortedDetails->forPage($page, $perPage)->values(),
+            $sortedDetails->count(),
+            $perPage,
+            $page,
+            ['path' => \Illuminate\Pagination\Paginator::resolveCurrentPath()]
+        );
+
         return view('user.history.index', [
-            'histories' => $sortedDetails
+            'histories' => $paginatedDetails
         ]);
     }
 }

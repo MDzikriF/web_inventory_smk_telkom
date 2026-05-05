@@ -132,14 +132,55 @@
         max-width: 100%;
         border-radius: 5px;
     }
+    .unread-badge {
+        background: #dc3545;
+        color: white;
+        border-radius: 50%;
+        width: 20px;
+        height: 20px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.75rem;
+        font-weight: bold;
+    }
+    .user-item.active .unread-badge {
+        background: white;
+        color: #dc3545;
+    }
+    
+    @media (max-width: 768px) {
+        .chat-admin-container {
+            flex-direction: column;
+            height: auto;
+            min-height: calc(100vh - 100px);
+        }
+        .user-list {
+            width: 100%;
+            height: 150px;
+            border-right: none;
+            border-bottom: 1px solid #dee2e6;
+        }
+        .chat-header {
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        .chat-header > div {
+            width: 100%;
+            justify-content: flex-start;
+        }
+    }
 </style>
 
 <div class="chat-admin-container">
     <div class="user-list">
         <h4>Daftar User</h4>
         @foreach($users as $user)
-            <div class="user-item {{ $selectedUser && $selectedUser->nip == $user->nip ? 'active' : '' }}" onclick="selectUser('{{ $user->nip }}')">
-                {{ $user->name }} ({{ $user->nip }})
+            <div class="user-item {{ $selectedUser && $selectedUser->nip == $user->nip ? 'active' : '' }}" onclick="selectUser('{{ $user->nip }}')" style="display: flex; justify-content: space-between; align-items: center;">
+                <span>{{ $user->name }} ({{ $user->nip }})</span>
+                @if($user->unread_count > 0)
+                    <span class="unread-badge">{{ $user->unread_count }}</span>
+                @endif
             </div>
         @endforeach
     </div>
@@ -150,12 +191,14 @@
                 <a href="{{ route('admin.settings.index') }}" style="background: rgba(255,255,255,0.2); color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-size: 0.9rem; font-weight: 600; transition: background 0.2s;" onmouseover="this.style.background='rgba(255,255,255,0.3)'" onmouseout="this.style.background='rgba(255,255,255,0.2)'">
                     ⚙️ Pengaturan
                 </a>
-                <form action="{{ route('admin.chat.clear_all') }}" method="POST" onsubmit="return confirmClearAll()" style="display: inline;">
+                @if($selectedUser)
+                <form action="{{ route('admin.chat.clear', $selectedUser->nip) }}" method="POST" onsubmit="return confirm('Apakah Anda yakin ingin menghapus seluruh riwayat chat dengan {{ $selectedUser->name }}? Tindakan ini tidak dapat dibatalkan.')" style="display: inline;">
                     @csrf
-                    <button type="submit" style="background: rgba(220, 53, 69, 0.8); color: white; padding: 8px 16px; border: none; border-radius: 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(220, 53, 69, 1)'" onmouseout="this.style.background='rgba(220, 53, 69, 0.8)'">
-                        🗑️ Hapus Semua
+                    <button type="submit" style="background: rgba(220, 53, 69, 0.8); color: white; padding: 8px 16px; border: none; border-radius: 20px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: background 0.2s;" onmouseover="this.style.background='rgba(220, 53, 69, 1)'" onmouseout="this.style.background='rgba(220, 53, 69, 0.8)'" title="Hapus seluruh chat dengan user ini">
+                        🗑️ Hapus Chat
                     </button>
                 </form>
+                @endif
             </div>
         </div>
         <div class="chat-messages" id="chat-messages">
@@ -286,15 +329,56 @@
                                 messageDiv.appendChild(videoWrapper);
                             }
                         }
+
+                        // Add delete button (trash icon)
+                        const deleteBtn = document.createElement('span');
+                        deleteBtn.innerHTML = '🗑️';
+                        deleteBtn.style.cursor = 'pointer';
+                        deleteBtn.style.fontSize = '0.8rem';
+                        deleteBtn.style.marginLeft = '10px';
+                        deleteBtn.title = 'Hapus Pesan';
+                        deleteBtn.onclick = function() {
+                            if(confirm('Hapus pesan ini?')) {
+                                fetch('/admin/chat/message/' + message.id, {
+                                    method: 'DELETE',
+                                    headers: {
+                                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                                    }
+                                })
+                                .then(res => res.json())
+                                .then(data => {
+                                    if(data.success) {
+                                        loadMessages();
+                                    } else {
+                                        alert('Gagal menghapus pesan');
+                                    }
+                                });
+                            }
+                        };
                         
                         // Add timestamp
                         const timeDiv = document.createElement('div');
                         timeDiv.style.fontSize = '0.75rem';
                         timeDiv.style.color = '#999';
                         timeDiv.style.marginTop = '5px';
-                        timeDiv.style.textAlign = isSent ? 'right' : 'left';
+                        timeDiv.style.display = 'flex';
+                        timeDiv.style.justifyContent = isSent ? 'flex-end' : 'flex-start';
+                        timeDiv.style.alignItems = 'center';
+                        
                         const messageDate = new Date(message.created_at);
-                        timeDiv.textContent = messageDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                        const timeText = document.createElement('span');
+                        timeText.textContent = messageDate.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+                        
+                        if (isSent) {
+                            timeDiv.appendChild(deleteBtn);
+                            timeDiv.appendChild(document.createTextNode('\u00A0\u00A0')); // spacing
+                            timeDiv.appendChild(timeText);
+                        } else {
+                            timeDiv.appendChild(timeText);
+                            timeDiv.appendChild(document.createTextNode('\u00A0\u00A0')); // spacing
+                            timeDiv.appendChild(deleteBtn);
+                        }
+                        
                         messageDiv.appendChild(timeDiv);
                         
                         messagesContainer.appendChild(messageDiv);
@@ -369,9 +453,5 @@
         loadMessages();
         setInterval(loadMessages, 5000);
     @endif
-    
-    function confirmClearAll() {
-        return confirm('Apakah Anda yakin ingin menghapus SEMUA chat? Tindakan ini tidak dapat dibatalkan dan akan menghapus semua pesan dari sistem.');
-    }
 </script>
 @endsection

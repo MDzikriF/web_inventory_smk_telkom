@@ -100,13 +100,17 @@
                     <h4 class="nf-title">{{ $notif->title }}</h4>
                     <p class="nf-desc">{{ $notif->message }}</p>
                 </div>
-                <div class="nf-time">{{ $notif->created_at->diffForHumans() }}</div>
+                <div class="nf-time">{{ $notif->created_at->format('d M Y, H:i') }}<br>{{ $notif->created_at->diffForHumans() }}</div>
             </div>
         @empty
             <div style="text-align:center; padding: 40px; color:#999; font-size:0.9rem;">
                 Belum ada notifikasi.
             </div>
         @endforelse
+    </div>
+    
+    <div class="mt-4 custom-pagination">
+        {{ $notifications->appends(request()->except('notif_page'))->links('pagination::bootstrap-4') }}
     </div>
 
     <!-- Widgets -->
@@ -137,16 +141,12 @@
         @foreach($req->details as $detail)
         <div class="hi-card">
             <div class="hi-img">
-                @if($detail->item->photo)
-                    <img src="{{ asset($detail->item->photo) }}" alt="Item">
-                @else
-                    <span style="color:#aaa;">Img</span>
-                @endif
+                    <img src="{{ $detail->item->photo_url }}" alt="Item">
             </div>
             <div class="hi-info">
                 <h4>{{ $detail->item->name ?? 'Aset Dihapus' }}</h4>
                 <!-- Mengekstrak notes jika memungkinkan, atau tampilkan fallback waktu create -->
-                <p>Dipinjam: {{ \Carbon\Carbon::parse($req->created_at)->format('d/m/Y (H:i)') }}</p>
+                <p>Dipinjam: {{ \Carbon\Carbon::parse($req->created_at)->format('d/m/Y (H:i)') }} &bull; Update: {{ \Carbon\Carbon::parse($req->updated_at)->format('d/m/Y H:i') }}</p>
             </div>
             
             <div class="hi-actions">
@@ -183,6 +183,10 @@
             Belum ada aktivitas peminjaman.
         </div>
     @endforelse
+
+    <div class="mt-4 custom-pagination">
+        {{ $requests->appends(request()->except('req_page'))->links('pagination::bootstrap-4') }}
+    </div>
 </div>
 
 <!-- RETURN MODAL OVERLAY -->
@@ -235,5 +239,12 @@
     function closeReturnModal() {
         document.getElementById('returnModal').style.display = 'none';
     }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('req_page')) { 
+            document.querySelector('.nf-tab-btn[onclick*="history"]').click();
+        }
+    });
 </script>
 @endsection

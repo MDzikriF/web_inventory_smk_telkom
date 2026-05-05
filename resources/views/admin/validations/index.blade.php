@@ -2,10 +2,43 @@
 @section('title', 'Validasi Peminjaman')
 
 @section('content')
+<style>
+    .val-container {
+        display: flex; 
+        gap: 20px; 
+        flex-wrap: wrap;
+    }
+    .val-col {
+        flex: 1; 
+        min-width: 420px;
+    }
+    @media (max-width: 768px) {
+        .val-col {
+            min-width: 100%;
+        }
+        .damage-card {
+            flex-direction: column !important;
+            align-items: stretch !important;
+        }
+        .damage-img-container {
+            width: 100% !important;
+            height: 200px !important;
+        }
+        .damage-actions {
+            flex-direction: row;
+            width: 100%;
+            justify-content: space-between;
+        }
+        .damage-actions button {
+            flex: 1;
+        }
+    }
+</style>
+
 <h1 class="page-title">Validasi Peminjaman & Kerusakan</h1>
 
-<div style="display:flex; gap:20px; flex-wrap:wrap;">
-    <div style="flex:1; min-width:420px;">
+<div class="val-container">
+    <div class="val-col">
         <div class="card">
             <div style="margin-bottom: 20px;">
                 <h3 style="font-weight: 600; color: var(--text-dark);">Antrean Permintaan</h3>
@@ -76,7 +109,7 @@
         </div>
     </div>
 
-    <div style="flex:1; min-width:420px;">
+    <div class="val-col">
         <div class="card">
             <div style="margin-bottom: 20px;">
                 <h3 style="font-weight: 600; color: var(--text-dark);">Antrean Laporan Kerusakan</h3>
@@ -90,9 +123,9 @@
             @else
                 <div style="display:flex; flex-direction:column; gap:16px;">
                     @foreach($damageReports as $report)
-                        <div style="display:flex; gap:16px; padding:18px 16px; border:1px solid #e5e7eb; border-radius:16px; background:#fff; align-items:flex-start; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);">
+                        <div class="damage-card" style="display:flex; gap:16px; padding:18px 16px; border:1px solid #e5e7eb; border-radius:16px; background:#fff; align-items:flex-start; box-shadow: 0 1px 3px rgba(15, 23, 42, 0.05);">
                             @if($report->photo)
-                                <div style="flex-shrink:0; width:96px; height:96px; border-radius:16px; overflow:hidden; background:#f8fafc; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0;">
+                                <div class="damage-img-container" style="flex-shrink:0; width:96px; height:96px; border-radius:16px; overflow:hidden; background:#f8fafc; display:flex; align-items:center; justify-content:center; border:1px solid #e2e8f0;">
                                     <img src="{{ asset($report->photo) }}" alt="Foto Kerusakan" style="width:100%; height:100%; object-fit:cover;" />
                                 </div>
                             @endif
@@ -107,6 +140,8 @@
                                             <span style="display:inline-block; padding: 6px 10px; border-radius:999px; background: rgba(250, 204, 21, 0.15); color: #b45309; font-size: 0.8rem; font-weight:700;">Menunggu</span>
                                         @elseif($report->status == 'reviewed')
                                             <span style="display:inline-block; padding: 6px 10px; border-radius:999px; background: rgba(59, 130, 246, 0.15); color: #1d4ed8; font-size: 0.8rem; font-weight:700;">Ditinjau</span>
+                                        @elseif($report->status == 'unrepairable')
+                                            <span style="display:inline-block; padding: 6px 10px; border-radius:999px; background: rgba(239, 68, 68, 0.15); color: #b91c1c; font-size: 0.8rem; font-weight:700;">Rusak</span>
                                         @else
                                             <span style="display:inline-block; padding: 6px 10px; border-radius:999px; background: rgba(16, 185, 129, 0.15); color: #047857; font-size: 0.8rem; font-weight:700;">Selesai</span>
                                         @endif
@@ -123,16 +158,15 @@
                                     </div>
                                 </div>
                             </div>
-                            <div style="display:flex; flex-direction:column; gap:10px; align-items:flex-end;">
-                                @if($report->status == 'pending')
-                                    <form action="{{ route('admin.validations.damage.review', $report->id) }}" method="POST" onsubmit="return confirm('Tandai laporan ini sebagai sedang ditinjau?');">
+                            <div class="damage-actions" style="display:flex; gap:10px; align-items:flex-start;">
+                                @if($report->status == 'pending' || $report->status == 'reviewed')
+                                    <form action="{{ route('admin.validations.damage.resolve', $report->id) }}" method="POST" onsubmit="return confirm('Tandai laporan ini selesai diperbaiki?');">
                                         @csrf
-                                        <button type="submit" class="btn" style="background:#f59e0b; color:white; padding: 10px 14px; font-size: 0.88rem; border-radius: 10px;">Tinjau</button>
+                                        <button type="submit" class="btn" style="background:#10b981; color:white; padding: 10px 14px; font-size: 0.88rem; border-radius: 10px;">Selesai Diperbaiki</button>
                                     </form>
-                                @elseif($report->status == 'reviewed')
-                                    <form action="{{ route('admin.validations.damage.resolve', $report->id) }}" method="POST" onsubmit="return confirm('Tandai laporan ini selesai?');">
+                                    <form action="{{ route('admin.validations.damage.unrepairable', $report->id) }}" method="POST" onsubmit="return confirm('Tandai barang ini rusak / tidak bisa diperbaiki?');">
                                         @csrf
-                                        <button type="submit" class="btn" style="background:#10b981; color:white; padding: 10px 14px; font-size: 0.88rem; border-radius: 10px;">Selesai</button>
+                                        <button type="submit" class="btn" style="background:#ef4444; color:white; padding: 10px 14px; font-size: 0.88rem; border-radius: 10px;">Barang Rusak</button>
                                     </form>
                                 @else
                                     <div style="font-size:0.85rem; color: var(--text-muted);">Tidak ada aksi</div>

@@ -9,16 +9,16 @@ class NotificationController extends Controller
 {
     public function index()
     {
-        $notifications = \App\Models\Notification::where('user_id', auth()->id())->latest()->get();
+        $notifications = \App\Models\Notification::where('user_id', auth()->id())->latest()->paginate(10, ['*'], 'notif_page');
         
-        // Mark all unread as read
+        // Mark all unread as read (We should only mark the ones on current page or maybe all, but the previous code marked all unread as read)
         \App\Models\Notification::where('user_id', auth()->id())->where('is_read', false)->update(['is_read' => true]);
         
         $requests = \App\Models\ItemRequest::with('details.item')
             ->where('user_id', auth()->id())
             ->whereIn('status', ['approved', 'return_requested', 'returned'])
             ->latest()
-            ->get();
+            ->paginate(10, ['*'], 'req_page');
             
         return view('user.notifications.index', compact('notifications', 'requests'));
     }

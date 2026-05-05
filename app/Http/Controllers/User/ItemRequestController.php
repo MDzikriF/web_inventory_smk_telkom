@@ -10,24 +10,40 @@ class ItemRequestController extends Controller
     public function store(Request $request)
     {
         $request->validate([
-            'item_id' => 'required|exists:items,id',
-            'quantity' => 'required|integer|min:1',
+            'items' => 'required|array',
+            'items.*' => 'required|integer|min:1',
             'tanggal' => 'required|date',
             'jam_mulai' => 'required|date_format:H:i',
             'jam_selesai' => 'required|date_format:H:i',
             'return_date' => 'nullable|date|after_or_equal:tanggal',
         ]);
 
-        $item = \App\Models\Item::findOrFail($request->item_id);
-        if ($item->stock < $request->quantity) {
-            return back()->with('error', 'Stok tidak mencukupi.');
+        $hasHardware = false;
+        $itemsToRequest = [];
+
+        foreach ($request->items as $itemId => $qty) {
+            $item = \App\Models\Item::findOrFail($itemId);
+            if ($item->stock < $qty) {
+                return back()->with('error', "Stok untuk barang {$item->name} tidak mencukupi.");
+            }
+            if ($item->category->name === 'Hardware') {
+                $hasHardware = true;
+            }
+            $itemsToRequest[] = [
+                'item' => $item,
+                'quantity' => $qty,
+            ];
         }
 
-        // Tentukan return_date hanya untuk kategori Hardware
+        // Tentukan return_date hanya jika ada kategori Hardware
         $returnDate = null;
         $note = "Tgl: {$request->tanggal} | Jam: {$request->jam_mulai} s/d {$request->jam_selesai}";
-        if ($item->category->name === 'Hardware') {
-            $returnDate = $request->return_date ? $request->tanggal . ' ' . $request->jam_selesai : null;
+        
+        if ($hasHardware) {
+            if (!$request->return_date) {
+                return back()->with('error', 'Tanggal pengembalian wajib diisi untuk peminjaman alat (Hardware).');
+            }
+            $returnDate = $request->return_date . ' ' . $request->jam_selesai;
         } else {
             $note .= ' | Sekali pakai, tidak perlu dikembalikan.';
         }
@@ -43,11 +59,13 @@ class ItemRequestController extends Controller
             'notes' => $note,
         ]);
 
-        \App\Models\ItemRequestDetail::create([
-            'item_request_id' => $itemRequest->id,
-            'item_id' => $request->item_id,
-            'quantity' => $request->quantity,
-        ]);
+        foreach ($itemsToRequest as $data) {
+            \App\Models\ItemRequestDetail::create([
+                'item_request_id' => $itemRequest->id,
+                'item_id' => $data['item']->id,
+                'quantity' => $data['quantity'],
+            ]);
+        }
 
         return redirect()->route('user.catalog.index')->with('success', 'Permintaan peminjaman berhasil terkirim!');
     }

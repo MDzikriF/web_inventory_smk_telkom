@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
 use App\Models\User;
+use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
@@ -12,6 +13,18 @@ class UserController extends Controller
     {
         $users = User::latest()->get();
         return view('admin.users.index', compact('users'));
+    }
+
+    public function verifyPassword(Request $request)
+    {
+        $password = $request->input('password');
+        $user = auth()->user();
+
+        if (Hash::check($password, $user->password)) {
+            return response()->json(['success' => true]);
+        } else {
+            return response()->json(['success' => false]);
+        }
     }
 
     public function store(Request $request)

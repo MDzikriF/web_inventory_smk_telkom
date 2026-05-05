@@ -20,6 +20,7 @@ class LaporanRusak extends Model
         'jumlah_rusak',
         'satuan',
         'kerusakan',
+        'jenis_laporan',
         'keterangan',
         'tanggal_lapor',
         'dilaporkan_oleh',

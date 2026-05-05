@@ -61,11 +61,7 @@
                 @foreach($items as $item)
                 <tr style="{{ $item->stock < 5 ? 'background-color: rgba(243, 156, 18, 0.1); border-left: 3px solid #f39c12;' : '' }}">
                     <td>
-                        @if($item->photo)
-                            <img src="{{ asset($item->photo) }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; display: block;" alt="{{ $item->name }}">
-                        @else
-                            <img src="https://via.placeholder.com/50x50.png?text=Item" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; display: block;" alt="No Image">
-                        @endif
+                        <img src="{{ $item->photo_url }}" style="width: 50px; height: 50px; object-fit: cover; border-radius: 8px; display: block;" alt="{{ $item->name }}">
                         @if($item->stock < 5)
                             <span style="display: block; font-size: 0.7rem; color: #e67e22; margin-top: 2px;">⚠️ Stok Rendah</span>
                         @endif

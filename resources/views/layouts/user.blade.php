@@ -13,6 +13,15 @@
         @media (max-width: 768px) {
             .topbar .center-logo { display: none; }
         }
+        
+        /* Pagination Styles */
+        .custom-pagination { display: flex; justify-content: center; margin-top: 20px; }
+        .custom-pagination nav { display: flex; align-items: center; justify-content: space-between; width: 100%; font-size: 0.9rem; flex-wrap: wrap; gap: 15px; }
+        .custom-pagination ul.pagination { display: flex; padding-left: 0; list-style: none; gap: 5px; margin: 0; }
+        .custom-pagination .page-link { position: relative; display: block; padding: 6px 12px; border: 1px solid var(--border-color, #dee2e6); border-radius: 6px; color: #333; text-decoration: none; background: white; transition: 0.2s; font-weight: 500; }
+        .custom-pagination .page-link:hover { background: #f8f9fa; border-color: #ccc; }
+        .custom-pagination .page-item.active .page-link { z-index: 3; color: #fff; background-color: var(--primary, #c91a25); border-color: var(--primary, #c91a25); }
+        .custom-pagination .page-item.disabled .page-link { color: #6c757d; pointer-events: none; background-color: #f8f9fa; border-color: var(--border-color, #dee2e6); opacity: 0.6; }
     </style>
 </head>
 <body>
@@ -81,6 +90,25 @@
                 </div>
                 
                 <div style="display: flex; align-items: center; gap: 15px; position:relative;">
+                    <!-- Topbar Notification Icons -->
+                    <div style="display: flex; gap: 10px; margin-right: 10px;">
+                        <!-- Chat Icon -->
+                        <a href="{{ route('user.chat.index') }}" style="position: relative; color: #555; display: flex; align-items: center; text-decoration: none; padding: 8px; border-radius: 50%; background: #f5f5f5; transition: 0.2s;" onmouseover="this.style.background='#ebebeb'" onmouseout="this.style.background='#f5f5f5'" title="Chat Admin">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+                            @if($unreadChatCount > 0)
+                                <span style="position: absolute; top: -2px; right: -2px; background: #2ecc71; color: white; font-size: 0.65rem; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid white;">{{ $unreadChatCount }}</span>
+                            @endif
+                        </a>
+                        
+                        <!-- Notification / Pengaduan Icon -->
+                        <a href="{{ route('user.notifications.index') }}" style="position: relative; color: #555; display: flex; align-items: center; text-decoration: none; padding: 8px; border-radius: 50%; background: #f5f5f5; transition: 0.2s;" onmouseover="this.style.background='#ebebeb'" onmouseout="this.style.background='#f5f5f5'" title="Notifikasi & Pengaduan">
+                            <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" viewBox="0 0 24 24"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+                            @if($userUnreadCount > 0)
+                                <span style="position: absolute; top: -2px; right: -2px; background: #e74c3c; color: white; font-size: 0.65rem; font-weight: bold; width: 16px; height: 16px; border-radius: 50%; display: flex; justify-content: center; align-items: center; border: 2px solid white;">{{ $userUnreadCount }}</span>
+                            @endif
+                        </a>
+                    </div>
+
                     <div onclick="toggleProfileMenu()" style="width: 40px; height: 40px; border-radius: 50%; background: var(--primary); color: white; display: flex; align-items: center; justify-content: center; font-weight: 700; cursor:pointer;">
                         {{ strtoupper(substr(Auth::user()->name ?? 'U', 0, 1)) }}
                     </div>
