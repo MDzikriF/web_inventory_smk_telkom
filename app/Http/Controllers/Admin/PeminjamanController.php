@@ -14,7 +14,30 @@ class PeminjamanController extends Controller
 {
     public function index()
     {
-        $peminjaman = Peminjaman::orderBy('tanggal_peminjaman', 'desc')->paginate(10);
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) {
+                $q->whereNotIn('status', ['pending', 'rejected']);
+            })
+            ->latest()
+            ->paginate(10)
+            ->through(function($detail) {
+                return (object) [
+                    'id' => $detail->id,
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? 'Unit',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
+
         return view('admin.peminjaman.index', compact('peminjaman'));
     }
 
@@ -95,14 +118,53 @@ class PeminjamanController extends Controller
 
     public function exportPdf()
     {
-        $peminjaman = Peminjaman::orderBy('tanggal_peminjaman', 'desc')->get();
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) {
+                $q->whereNotIn('status', ['pending', 'rejected']);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? '-',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
+
         $pdf = PDF::loadView('admin.peminjaman.print', compact('peminjaman'));
         return $pdf->download('Laporan_Peminjaman_Aset_' . date('Y-m-d') . '.pdf');
     }
 
     public function exportWord()
     {
-        $peminjaman = Peminjaman::orderBy('tanggal_peminjaman', 'desc')->get();
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) {
+                $q->whereNotIn('status', ['pending', 'rejected']);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? '-',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
         
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();
@@ -147,7 +209,27 @@ class PeminjamanController extends Controller
 
     public function exportExcel()
     {
-        $peminjaman = Peminjaman::orderBy('tanggal_peminjaman', 'desc')->get();
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) {
+                $q->whereNotIn('status', ['pending', 'rejected']);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? '-',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
+
         $fileName = "Laporan_Peminjaman_" . date('Y-m-d') . ".csv";
 
         $headers = [

@@ -216,14 +216,47 @@ class LaporanController extends Controller
     // Export Laporan Perbaikan
     public function exportPerbaikanPdf()
     {
-        $laporanPerbaikan = LaporanRusak::where('jenis_laporan', 'perbaikan')->orderBy('tanggal_lapor', 'desc')->get();
+        $laporanPerbaikan = \App\Models\DamageReport::with(['item.category', 'item.unit'])
+            ->where('status', 'resolved')
+            ->get()->map(function($report) {
+                return (object) [
+                    'kode_barang' => $report->item->kode_barang ?? '-',
+                    'nama_barang' => $report->item->name ?? '-',
+                    'kategori' => $report->item->category->name ?? '-',
+                    'sub_kategori' => $report->item->sub_kategori ?? '-',
+                    'type' => $report->item->type ?? '-',
+                    'jumlah_rusak' => 1,
+                    'satuan' => $report->item->unit->name ?? 'Unit',
+                    'kerusakan' => $report->notes,
+                    'keterangan' => 'Dilaporkan oleh ' . ($report->user->name ?? $report->reporter_name ?? 'User'),
+                    'tanggal_lapor' => \Carbon\Carbon::parse($report->updated_at),
+                    'status' => 'Selesai',
+                ];
+            });
+
         $pdf = PDF::loadView('admin.laporan.print_perbaikan', compact('laporanPerbaikan'));
         return $pdf->download('Laporan_Perbaikan_' . date('Y-m-d') . '.pdf');
     }
 
     public function exportPerbaikanWord()
     {
-        $laporanPerbaikan = LaporanRusak::where('jenis_laporan', 'perbaikan')->orderBy('tanggal_lapor', 'desc')->get();
+        $laporanPerbaikan = \App\Models\DamageReport::with(['item.category', 'item.unit'])
+            ->where('status', 'resolved')
+            ->get()->map(function($report) {
+                return (object) [
+                    'kode_barang' => $report->item->kode_barang ?? '-',
+                    'nama_barang' => $report->item->name ?? '-',
+                    'kategori' => $report->item->category->name ?? '-',
+                    'sub_kategori' => $report->item->sub_kategori ?? '-',
+                    'type' => $report->item->type ?? '-',
+                    'jumlah_rusak' => 1,
+                    'satuan' => $report->item->unit->name ?? 'Unit',
+                    'kerusakan' => $report->notes,
+                    'keterangan' => 'Dilaporkan oleh ' . ($report->user->name ?? $report->reporter_name ?? 'User'),
+                    'tanggal_lapor' => \Carbon\Carbon::parse($report->updated_at),
+                    'status' => 'Selesai',
+                ];
+            });
         
         $phpWord = new PhpWord();
         $section = $phpWord->addSection();

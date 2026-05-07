@@ -117,6 +117,8 @@
                                 <span class="status-badge status-pending">MENUNGGU TINJAUAN</span>
                             @elseif($c->status == 'reviewed')
                                 <span class="status-badge status-reviewed">SEDANG DIPERIKSA</span>
+                            @elseif($c->status == 'unrepairable')
+                                <span class="status-badge" style="background: rgba(231, 76, 60, 0.15); color: #e74c3c;">BARANG RUSAK PERMANEN</span>
                             @else
                                 <span class="status-badge status-resolved">SELESAI TERATASI</span>
                             @endif

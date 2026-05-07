@@ -95,7 +95,7 @@ class RequestValidationController extends Controller
 
     public function unrepairableDamage($id)
     {
-        $report = DamageReport::findOrFail($id);
+        $report = DamageReport::with(['item.category', 'item.unit'])->findOrFail($id);
         
         DB::transaction(function() use ($report) {
             $report->update(['status' => 'unrepairable']);
@@ -111,6 +111,24 @@ class RequestValidationController extends Controller
                     'quantity' => 1,
                     'date' => now()->toDateString(),
                     'notes' => 'Penyesuaian stok: Barang rusak permanen (Laporan #' . str_pad($report->id, 4, '0', STR_PAD_LEFT) . ')',
+                ]);
+            }
+            
+            // Tambahkan ke tabel Kerusakan agar muncul di daftar Barang Rusak admin
+            if ($report->item) {
+                \App\Models\Kerusakan::create([
+                    'kode_barang' => $report->item->kode_barang ?? '-',
+                    'nama_barang' => $report->item->name,
+                    'kategori' => $report->item->category->name ?? '-',
+                    'sub_kategori' => $report->item->sub_kategori ?? '-',
+                    'type' => $report->item->type ?? '-',
+                    'jumlah_rusak' => 1,
+                    'satuan' => $report->item->unit->name ?? '-',
+                    'kerusakan' => $report->notes,
+                    'keterangan' => 'Dari laporan kerusakan #' . $report->id . ' (Rusak Permanen)',
+                    'tanggal_lapor' => now()->toDateString(),
+                    'dilaporkan_oleh' => $report->reporter_name ?? 'User',
+                    'status' => 'selesai',
                 ]);
             }
 

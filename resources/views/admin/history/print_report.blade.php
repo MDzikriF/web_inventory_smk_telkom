@@ -108,6 +108,40 @@
         </table>
     @endif
 
+    <div class="section-title">C. Laporan Peminjaman Aset</div>
+    @if($peminjaman->isEmpty())
+        <p style="text-align: center; font-style: italic;">Tidak ada transaksi peminjaman aset pada periode ini.</p>
+    @else
+        <table>
+            <thead>
+                <tr>
+                    <th width="5%">No</th>
+                    <th width="15%">Kode Barang</th>
+                    <th width="20%">Nama Barang</th>
+                    <th width="15%">Peminjam</th>
+                    <th width="10%">Jumlah</th>
+                    <th width="15%">Tgl Pinjam</th>
+                    <th width="15%">Tgl Kembali</th>
+                    <th width="10%">Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach($peminjaman as $index => $p)
+                <tr>
+                    <td style="text-align: center;">{{ $index + 1 }}</td>
+                    <td>{{ $p->kode_barang }}</td>
+                    <td>{{ $p->nama_barang }}</td>
+                    <td>{{ $p->peminjam }}</td>
+                    <td style="text-align: center;">{{ $p->jumlah_dipinjam }} {{ $p->satuan }}</td>
+                    <td>{{ \Carbon\Carbon::parse($p->tanggal_peminjaman)->format('d/m/Y') }}</td>
+                    <td>{{ $p->tanggal_kembali ? \Carbon\Carbon::parse($p->tanggal_kembali)->format('d/m/Y') : '-' }}</td>
+                    <td>{{ ucfirst($p->status) }}</td>
+                </tr>
+                @endforeach
+            </tbody>
+        </table>
+    @endif
+
     <div class="signature-section">
         <div class="signature-box">
             <p>Jakarta, {{ \Carbon\Carbon::now()->format('d F Y') }}</p>

@@ -83,24 +83,69 @@
                                 </td>
                                 <td style="text-align:center;">
                                     <div style="display:flex; flex-direction:column; gap:5px; align-items:center;">
+                                        <button type="button" onclick="openModal('reqModal{{$req->id}}')" class="btn" style="background:transparent; color:var(--primary); border:1px solid var(--primary); padding: 4px 10px; font-size: 0.8rem; width: 100%; border-radius: 6px; font-weight: 600;">Lihat Detail</button>
                                         @if($req->status === 'pending')
-                                            <form action="{{ route('admin.validations.approve', $req->id) }}" method="POST" onsubmit="return confirm('Setujui peminjaman ini? Stok inventaris akan berkurang otomatis.');">
+                                            <form action="{{ route('admin.validations.approve', $req->id) }}" method="POST" onsubmit="return confirm('Setujui peminjaman ini? Stok inventaris akan berkurang otomatis.');" style="width:100%;">
                                                 @csrf
-                                                <button type="submit" class="btn" style="background:#27ae60; color:white; padding: 6px 12px; font-size: 0.85rem; width: 80px;">Terima</button>
+                                                <button type="submit" class="btn" style="background:#27ae60; color:white; padding: 6px 12px; font-size: 0.85rem; width: 100%;">Terima</button>
                                             </form>
-                                            <form action="{{ route('admin.validations.reject', $req->id) }}" method="POST" onsubmit="return confirm('Tolak peminjaman ini?');">
+                                            <form action="{{ route('admin.validations.reject', $req->id) }}" method="POST" onsubmit="return confirm('Tolak peminjaman ini?');" style="width:100%;">
                                                 @csrf
-                                                <button type="submit" class="btn" style="background:#e74c3c; color:white; padding: 6px 12px; font-size: 0.85rem; width: 80px;">Tolak</button>
+                                                <button type="submit" class="btn" style="background:#e74c3c; color:white; padding: 6px 12px; font-size: 0.85rem; width: 100%;">Tolak</button>
                                             </form>
                                         @elseif($req->status === 'return_requested')
-                                            <form action="{{ route('admin.history.return', $req->id) }}" method="POST" onsubmit="return confirm('Konfirmasi bahwa barang fisik telah dikembalikan? Stok akan dipulihkan otomatis.');">
+                                            <form action="{{ route('admin.history.return', $req->id) }}" method="POST" onsubmit="return confirm('Konfirmasi bahwa barang fisik telah dikembalikan? Stok akan dipulihkan otomatis.');" style="width:100%;">
                                                 @csrf
-                                                <button type="submit" class="btn" style="background:#1d4ed8; color:white; padding: 6px 12px; font-size: 0.85rem; width: 140px;">Konfirmasi Pengembalian</button>
+                                                <button type="submit" class="btn" style="background:#1d4ed8; color:white; padding: 6px 12px; font-size: 0.85rem; width: 100%;">Konfirmasi Kembali</button>
                                             </form>
                                         @endif
                                     </div>
                                 </td>
                             </tr>
+                            
+                            @push('modals')
+                            <div class="modal-overlay" id="reqModal{{$req->id}}">
+                                <div class="modal" style="max-width: 500px; text-align:left;">
+                                    <div class="modal-header">
+                                        <h3 style="font-weight: 700;">Detail Permohonan Peminjaman</h3>
+                                        <button class="close-modal" type="button" onclick="closeModal('reqModal{{$req->id}}')">&times;</button>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column; gap:15px;">
+                                        <div>
+                                            <h4 style="margin:0 0 5px 0; color:var(--text-dark); font-size: 0.9rem; text-transform: uppercase;">Informasi Pemohon</h4>
+                                            <p style="margin:0; font-size:1.05rem; font-weight: 600;">{{ optional($req->user)->name ?? $req->reporter_name ?? 'User Dihapus' }}</p>
+                                            <p style="margin:0; font-size:0.9rem; color:var(--text-muted);">{{ optional($req->user)->email ?? $req->reporter_email ?? 'N/A' }}</p>
+                                            <p style="margin:5px 0 0 0; font-size:0.85rem; color:var(--text-muted);">Waktu Pengajuan: {{ \Carbon\Carbon::parse($req->created_at)->format('d M Y, H:i') }}</p>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin:0 0 5px 0; color:var(--text-dark); font-size: 0.9rem; text-transform: uppercase;">Daftar Barang</h4>
+                                            <ul style="padding-left: 20px; margin: 0; font-size: 1rem; color: #334155;">
+                                                @foreach($req->details as $detail)
+                                                    <li style="margin-bottom: 5px;"><strong>{{ $detail->quantity }}x</strong> {{ $detail->item->name ?? 'Barang Dihapus' }} <span style="font-size: 0.85rem; color: var(--text-muted);">(Kode: {{ $detail->item->kode_barang ?? '-' }})</span></li>
+                                                @endforeach
+                                            </ul>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin:0 0 5px 0; color:var(--text-dark); font-size: 0.9rem; text-transform: uppercase;">Waktu / Periode Penggunaan</h4>
+                                            <div style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #e2e8f0;">
+                                                <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                                    <span style="color:var(--text-muted); font-size:0.9rem;">Mulai:</span>
+                                                    <strong style="color:var(--text-dark);">{{ \Carbon\Carbon::parse($req->request_date)->format('d M Y, H:i') }}</strong>
+                                                </div>
+                                                <div style="display:flex; justify-content:space-between;">
+                                                    <span style="color:var(--text-muted); font-size:0.9rem;">Selesai:</span>
+                                                    <strong style="color:var(--text-dark);">{{ $req->return_date ? \Carbon\Carbon::parse($req->return_date)->format('d M Y, H:i') : 'Sekali Pakai' }}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin:0 0 5px 0; color:var(--text-dark); font-size: 0.9rem; text-transform: uppercase;">Catatan Pemohon</h4>
+                                            <div style="background:#f1f5f9; padding:12px; border-radius:8px; font-size:0.95rem; color:#334155; white-space:pre-wrap;">{{ $req->notes ?? 'Tidak ada catatan' }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endpush
                             @endforeach
                         </tbody>
                     </table>
@@ -148,7 +193,10 @@
                                     </div>
                                 </div>
                                 <div style="display:grid; gap:10px;">
-                                    <div style="font-size:0.9rem; color: var(--text-muted);">{{ Str::limit($report->notes, 100) }}</div>
+                                    <div style="font-size:0.9rem; color: var(--text-muted);">
+                                        {{ Str::limit($report->notes, 90) }}
+                                        <button type="button" onclick="openModal('detailModal{{$report->id}}')" style="background:none; border:none; color:var(--primary); font-weight:700; font-size:0.85rem; padding:0; cursor:pointer; margin-top:6px; display:inline-block;">Lihat Detail Laporan &rarr;</button>
+                                    </div>
                                     <div style="display:flex; flex-wrap:wrap; gap:16px; align-items:center;">
                                         <div>
                                             <div style="font-size:0.78rem; color: var(--text-muted); text-transform: uppercase; letter-spacing:0.03em;">Pengirim</div>
@@ -158,20 +206,50 @@
                                     </div>
                                 </div>
                             </div>
-                            <div class="damage-actions" style="display:flex; gap:10px; align-items:flex-start;">
+                            <div class="damage-actions" style="display:flex; gap:10px; align-items:flex-start; flex-wrap: wrap;">
                                 @if($report->status == 'pending' || $report->status == 'reviewed')
-                                    <form action="{{ route('admin.validations.damage.resolve', $report->id) }}" method="POST" onsubmit="return confirm('Tandai laporan ini selesai diperbaiki?');">
+                                    <form action="{{ route('admin.validations.damage.resolve', $report->id) }}" method="POST" onsubmit="return confirm('Tandai laporan ini selesai diperbaiki?');" style="margin:0;">
                                         @csrf
                                         <button type="submit" class="btn" style="background:#10b981; color:white; padding: 10px 14px; font-size: 0.88rem; border-radius: 10px;">Selesai Diperbaiki</button>
                                     </form>
-                                    <form action="{{ route('admin.validations.damage.unrepairable', $report->id) }}" method="POST" onsubmit="return confirm('Tandai barang ini rusak / tidak bisa diperbaiki?');">
+                                    <form action="{{ route('admin.validations.damage.unrepairable', $report->id) }}" method="POST" onsubmit="return confirm('Tandai barang ini rusak / tidak bisa diperbaiki?');" style="margin:0;">
                                         @csrf
                                         <button type="submit" class="btn" style="background:#ef4444; color:white; padding: 10px 14px; font-size: 0.88rem; border-radius: 10px;">Barang Rusak</button>
                                     </form>
-                                @else
-                                    <div style="font-size:0.85rem; color: var(--text-muted);">Tidak ada aksi</div>
                                 @endif
                             </div>
+
+                            @push('modals')
+                            <div class="modal-overlay" id="detailModal{{$report->id}}">
+                                <div class="modal" style="max-width: 600px;">
+                                    <div class="modal-header">
+                                        <h3 style="font-weight: 700;">Detail Laporan Kerusakan</h3>
+                                        <button class="close-modal" type="button" onclick="closeModal('detailModal{{$report->id}}')">&times;</button>
+                                    </div>
+                                    <div style="display:flex; flex-direction:column; gap:20px;">
+                                        @if($report->photo)
+                                            <div style="width:100%; border-radius:12px; overflow:hidden; background:#f8fafc; border:1px solid #e2e8f0;">
+                                                <img src="{{ asset($report->photo) }}" alt="Foto Kerusakan" style="width:100%; max-height:400px; object-fit:contain; display:block;" />
+                                            </div>
+                                        @endif
+                                        <div>
+                                            <h4 style="margin:0 0 5px 0; color:var(--text-dark); font-size: 0.9rem; text-transform: uppercase;">Aset yang Dilaporkan</h4>
+                                            <p style="margin:0; font-size:1.1rem; font-weight: 600;">{{ $report->item->name ?? 'Aset Dihapus' }} <span style="font-size: 0.9rem; font-weight: normal; color: var(--text-muted);">(Kode: {{ $report->item->kode_barang ?? '-' }})</span></p>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin:0 0 5px 0; color:var(--text-dark); font-size: 0.9rem; text-transform: uppercase;">Informasi Pelapor</h4>
+                                            <p style="margin:0; font-size:1rem; font-weight: 500;">{{ optional($report->user)->name ?? $report->reporter_name ?? 'User Dihapus' }}</p>
+                                            <p style="margin:0; font-size:0.9rem; color:var(--text-muted);">{{ optional($report->user)->email ?? $report->reporter_email ?? 'N/A' }}</p>
+                                            <p style="margin:5px 0 0 0; font-size:0.85rem; color:var(--text-muted);">Waktu Lapor: {{ \Carbon\Carbon::parse($report->created_at)->format('d M Y, H:i') }}</p>
+                                        </div>
+                                        <div>
+                                            <h4 style="margin:0 0 5px 0; color:var(--text-dark); font-size: 0.9rem; text-transform: uppercase;">Catatan / Kronologi</h4>
+                                            <div style="background:#f1f5f9; padding:15px; border-radius:8px; font-size:0.95rem; color:#334155; white-space:pre-wrap; line-height: 1.5;">{{ $report->notes }}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            @endpush
                         </div>
                     @endforeach
                 </div>

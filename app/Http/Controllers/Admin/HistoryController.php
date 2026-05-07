@@ -74,9 +74,32 @@ class HistoryController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) use ($bulan, $tahun) {
+                $q->whereNotIn('status', ['pending', 'rejected'])
+                  ->whereMonth('request_date', $bulan)
+                  ->whereYear('request_date', $tahun);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? 'Unit',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
+
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
 
-        return view('admin.history.print_report', compact('transactions', 'damageReports', 'bulan', 'tahun', 'bulanNama'));
+        return view('admin.history.print_report', compact('transactions', 'damageReports', 'peminjaman', 'bulan', 'tahun', 'bulanNama'));
     }
 
     public function exportExcel(Request $request)
@@ -96,19 +119,43 @@ class HistoryController extends Controller
             ->orderBy('created_at', 'asc')
             ->get();
 
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) use ($bulan, $tahun) {
+                $q->whereNotIn('status', ['pending', 'rejected'])
+                  ->whereMonth('request_date', $bulan)
+                  ->whereYear('request_date', $tahun);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? 'Unit',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
+
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
         $fileName = "Laporan_Bulanan_{$bulanNama}_{$tahun}.csv";
 
         $headers = [
-            "Content-type"        => "text/csv",
+            "Content-type"        => "text/csv; charset=UTF-8",
             "Content-Disposition" => "attachment; filename=$fileName",
             "Pragma"              => "no-cache",
             "Cache-Control"       => "must-revalidate, post-check=0, pre-check=0",
             "Expires"             => "0"
         ];
 
-        $callback = function() use($transactions, $damageReports, $bulanNama, $tahun) {
+        $callback = function() use($transactions, $damageReports, $peminjaman, $bulanNama, $tahun) {
             $file = fopen('php://output', 'w');
+            fprintf($file, chr(0xEF).chr(0xBB).chr(0xBF)); // UTF-8 BOM
             
             // Laporan Keluar Masuk
             fputcsv($file, ["LAPORAN KELUAR MASUK BARANG - $bulanNama $tahun"]);
@@ -140,6 +187,24 @@ class HistoryController extends Controller
                 ]);
             }
 
+            fputcsv($file, []); // Empty line
+
+            // Laporan Peminjaman
+            fputcsv($file, ["LAPORAN PEMINJAMAN ASET - $bulanNama $tahun"]);
+            fputcsv($file, ['Kode Barang', 'Nama Barang', 'Peminjam', 'Jumlah', 'Tgl Pinjam', 'Tgl Kembali', 'Status']);
+            
+            foreach ($peminjaman as $p) {
+                fputcsv($file, [
+                    $p->kode_barang,
+                    $p->nama_barang,
+                    $p->peminjam,
+                    $p->jumlah_dipinjam . ' ' . $p->satuan,
+                    $p->tanggal_peminjaman->format('d-m-Y'),
+                    $p->tanggal_kembali ? $p->tanggal_kembali->format('d-m-Y') : '-',
+                    $p->status
+                ]);
+            }
+
             fclose($file);
         };
 
@@ -152,10 +217,28 @@ class HistoryController extends Controller
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
 
-        $peminjaman = Peminjaman::whereMonth('tanggal_peminjaman', $bulan)
-            ->whereYear('tanggal_peminjaman', $tahun)
-            ->orderBy('tanggal_peminjaman', 'desc')
-            ->get();
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) use ($bulan, $tahun) {
+                $q->whereNotIn('status', ['pending', 'rejected'])
+                  ->whereMonth('request_date', $bulan)
+                  ->whereYear('request_date', $tahun);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? 'Unit',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
 
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
 
@@ -167,10 +250,28 @@ class HistoryController extends Controller
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
 
-        $peminjaman = Peminjaman::whereMonth('tanggal_peminjaman', $bulan)
-            ->whereYear('tanggal_peminjaman', $tahun)
-            ->orderBy('tanggal_peminjaman', 'desc')
-            ->get();
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) use ($bulan, $tahun) {
+                $q->whereNotIn('status', ['pending', 'rejected'])
+                  ->whereMonth('request_date', $bulan)
+                  ->whereYear('request_date', $tahun);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? 'Unit',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
 
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
 
@@ -298,10 +399,25 @@ class HistoryController extends Controller
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
 
-        $perbaikan = Perbaikan::whereMonth('tanggal_perbaikan', $bulan)
-            ->whereYear('tanggal_perbaikan', $tahun)
-            ->orderBy('tanggal_perbaikan', 'desc')
-            ->get();
+        $perbaikan = \App\Models\DamageReport::with(['item.category', 'item.unit'])
+            ->where('status', 'resolved')
+            ->whereMonth('updated_at', $bulan)
+            ->whereYear('updated_at', $tahun)
+            ->get()->map(function($report) {
+                return (object) [
+                    'kode_barang' => $report->item->kode_barang ?? '-',
+                    'nama_barang' => $report->item->name ?? '-',
+                    'kategori' => $report->item->category->name ?? '-',
+                    'sub_kategori' => $report->item->sub_kategori ?? '-',
+                    'type' => $report->item->type ?? '-',
+                    'jumlah_diperbaiki' => 1,
+                    'satuan' => $report->item->unit->name ?? 'Unit',
+                    'deskripsi_perbaikan' => $report->notes,
+                    'keterangan' => 'Selesai diperbaiki',
+                    'tanggal_perbaikan' => \Carbon\Carbon::parse($report->updated_at),
+                    'status' => 'selesai',
+                ];
+            });
 
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
 
@@ -313,10 +429,25 @@ class HistoryController extends Controller
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
 
-        $perbaikan = Perbaikan::whereMonth('tanggal_perbaikan', $bulan)
-            ->whereYear('tanggal_perbaikan', $tahun)
-            ->orderBy('tanggal_perbaikan', 'desc')
-            ->get();
+        $perbaikan = \App\Models\DamageReport::with(['item.category', 'item.unit'])
+            ->where('status', 'resolved')
+            ->whereMonth('updated_at', $bulan)
+            ->whereYear('updated_at', $tahun)
+            ->get()->map(function($report) {
+                return (object) [
+                    'kode_barang' => $report->item->kode_barang ?? '-',
+                    'nama_barang' => $report->item->name ?? '-',
+                    'kategori' => $report->item->category->name ?? '-',
+                    'sub_kategori' => $report->item->sub_kategori ?? '-',
+                    'type' => $report->item->type ?? '-',
+                    'jumlah_diperbaiki' => 1,
+                    'satuan' => $report->item->unit->name ?? 'Unit',
+                    'deskripsi_perbaikan' => $report->notes,
+                    'keterangan' => 'Selesai diperbaiki',
+                    'tanggal_perbaikan' => \Carbon\Carbon::parse($report->updated_at),
+                    'status' => 'selesai',
+                ];
+            });
 
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
 
@@ -370,10 +501,28 @@ class HistoryController extends Controller
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
 
-        $peminjaman = Peminjaman::whereMonth('tanggal_peminjaman', $bulan)
-            ->whereYear('tanggal_peminjaman', $tahun)
-            ->orderBy('tanggal_peminjaman', 'desc')
-            ->get();
+        $peminjaman = \App\Models\ItemRequestDetail::with(['itemRequest.user', 'item.category', 'item.unit'])
+            ->whereHas('itemRequest', function($q) use ($bulan, $tahun) {
+                $q->whereNotIn('status', ['pending', 'rejected'])
+                  ->whereMonth('request_date', $bulan)
+                  ->whereYear('request_date', $tahun);
+            })
+            ->get()->map(function($detail) {
+                return (object) [
+                    'kode_barang' => $detail->item->kode_barang ?? '-',
+                    'nama_barang' => $detail->item->name ?? '-',
+                    'kategori' => $detail->item->category->name ?? '-',
+                    'sub_kategori' => $detail->item->sub_kategori ?? '-',
+                    'type' => $detail->item->type ?? '-',
+                    'jumlah_dipinjam' => $detail->quantity,
+                    'satuan' => $detail->item->unit->name ?? 'Unit',
+                    'peminjam' => optional($detail->itemRequest->user)->name ?? $detail->itemRequest->reporter_name ?? 'User',
+                    'keterangan' => $detail->itemRequest->notes ?? '-',
+                    'tanggal_peminjaman' => \Carbon\Carbon::parse($detail->itemRequest->request_date),
+                    'tanggal_kembali' => $detail->itemRequest->return_date ? \Carbon\Carbon::parse($detail->itemRequest->return_date) : null,
+                    'status' => $detail->itemRequest->status,
+                ];
+            });
 
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
         $fileName = "Laporan_Peminjaman_Aset_{$bulanNama}_{$tahun}.csv";
@@ -460,10 +609,25 @@ class HistoryController extends Controller
         $bulan = $request->input('bulan', date('m'));
         $tahun = $request->input('tahun', date('Y'));
 
-        $perbaikan = Perbaikan::whereMonth('tanggal_perbaikan', $bulan)
-            ->whereYear('tanggal_perbaikan', $tahun)
-            ->orderBy('tanggal_perbaikan', 'desc')
-            ->get();
+        $perbaikan = \App\Models\DamageReport::with(['item.category', 'item.unit'])
+            ->where('status', 'resolved')
+            ->whereMonth('updated_at', $bulan)
+            ->whereYear('updated_at', $tahun)
+            ->get()->map(function($report) {
+                return (object) [
+                    'kode_barang' => $report->item->kode_barang ?? '-',
+                    'nama_barang' => $report->item->name ?? '-',
+                    'kategori' => $report->item->category->name ?? '-',
+                    'sub_kategori' => $report->item->sub_kategori ?? '-',
+                    'type' => $report->item->type ?? '-',
+                    'jumlah_diperbaiki' => 1,
+                    'satuan' => $report->item->unit->name ?? 'Unit',
+                    'deskripsi_perbaikan' => $report->notes,
+                    'keterangan' => 'Selesai diperbaiki',
+                    'tanggal_perbaikan' => \Carbon\Carbon::parse($report->updated_at),
+                    'status' => 'selesai',
+                ];
+            });
 
         $bulanNama = \Carbon\Carbon::createFromFormat('m', $bulan)->translatedFormat('F');
         $fileName = "Laporan_Perbaikan_{$bulanNama}_{$tahun}.csv";

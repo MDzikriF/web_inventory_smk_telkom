@@ -93,7 +93,7 @@
                             <div class="form-group">
                                 <label class="form-label">Hak Akses</label>
                                 <select name="role" class="form-control" required style="background:white;">
-                                    <option value="user" {{ $user->role === 'user' ? 'selected' : '' }}>User (Mahasiswa/Lab)</option>
+                                    <option value="user" {{ $user->role === 'user' ? 'selected' : '' }}>User (Siswa/Guru)</option>
                                     <option value="admin" {{ $user->role === 'admin' ? 'selected' : '' }}>Admin Inventaris</option>
                                 </select>
                             </div>
@@ -145,7 +145,7 @@
             <div class="form-group">
                 <label class="form-label">Hak Akses</label>
                 <select name="role" class="form-control" required style="background:white;">
-                    <option value="user">User (Mahasiswa/Lab)</option>
+                    <option value="user">User (Siswa/Guru)</option>
                     <option value="admin">Admin Inventaris</option>
                 </select>
             </div>
